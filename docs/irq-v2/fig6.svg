@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <rect width="1400" height="860" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+    <marker id="large-arrow" markerWidth="19" markerHeight="22" refX="17" refY="11" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L19,11 L0,22 Z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <g font-family="Microsoft YaHei, SimHei, sans-serif" fill="#172033">
+    <text x="30" y="52" font-size="24" font-weight="700">图 6  中断处理函数如何"跳转"：在被打断线程的栈顶再压一帧</text>
+
+    <g font-size="16" text-anchor="middle">
+      <text x="350" y="133">
+        <tspan x="350">块边界，IF=1：</tspan>
+        <tspan x="350" dy="27" font-family="Consolas, monospace">call_function(miri_irq_entry, 32)</tspan>
+      </text>
+      <text x="1040" y="133">
+        <tspan x="1040">入口帧弹出（</tspan><tspan font-family="Consolas, monospace">after_stack_pop</tspan><tspan>）：</tspan>
+        <tspan x="1040" dy="27">检查已 EOI，IF ← saved_if</tspan>
+      </text>
+    </g>
+
+    <g fill="none" stroke="#cbd5e1" stroke-width="2">
+      <rect x="30" y="225" width="320" height="430" rx="10"/>
+      <rect x="450" y="225" width="500" height="430" rx="10"/>
+      <rect x="1050" y="225" width="320" height="430" rx="10"/>
+    </g>
+
+    <g font-size="24" font-weight="700" text-anchor="middle">
+      <text x="190" y="265">被打断前</text>
+      <text x="700" y="265">中断进行中</text>
+      <text x="1210" y="265">返回后</text>
+    </g>
+
+    <g fill="none" stroke="#94a3b8" stroke-width="2">
+      <path d="M350,177 H400 V373"/>
+      <path d="M1040,177 H1000 V373"/>
+    </g>
+    <g fill="none" stroke="#475569" stroke-width="5" marker-end="url(#large-arrow)">
+      <path d="M366,390 H433"/>
+      <path d="M966,390 H1033"/>
+    </g>
+
+    <g stroke-width="2">
+      <rect x="50" y="585" width="280" height="50" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+      <rect x="50" y="515" width="280" height="60" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+
+      <rect x="470" y="585" width="310" height="50" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+      <rect x="470" y="515" width="310" height="60" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+      <rect x="470" y="445" width="310" height="60" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="4"/>
+      <rect x="470" y="375" width="310" height="60" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+      <rect x="470" y="305" width="310" height="60" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+
+      <rect x="795" y="416" width="140" height="119" rx="10" fill="#fff7ed" stroke="#f59e0b"/>
+      <path d="M781,475 H795" fill="none" stroke="#f59e0b"/>
+      <rect x="795" y="305" width="140" height="50" rx="10" fill="#e0f7fa" stroke="#0e7490"/>
+
+      <rect x="1070" y="585" width="210" height="50" rx="10" fill="#f3e8ff" stroke="#7c3aed"/>
+      <rect x="1070" y="515" width="210" height="60" rx="10" fill="#e7f6ec" stroke="#16a34a"/>
+      <rect x="1290" y="515" width="66" height="60" rx="10" fill="#e0f7fa" stroke="#0e7490"/>
+    </g>
+
+    <g font-family="Consolas, monospace" font-size="17" text-anchor="middle">
+      <text x="190" y="616">main</text>
+      <text x="190" y="551" xml:space="preserve">foo  @ bb7</text>
+
+      <text x="625" y="616">main</text>
+      <text x="625" y="539" xml:space="preserve">foo  @ bb7</text>
+      <text x="625" y="563" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="16">（原封不动，返回点=bb8）</text>
+      <text x="625" y="481" font-weight="700" fill="#1d4ed8">miri_irq_entry(32)</text>
+      <text x="625" y="411">trap_handler</text>
+      <text x="625" y="341">bottom_half …</text>
+
+      <text x="1175" y="616">main</text>
+      <text x="1175" y="551" fill="#166534" xml:space="preserve">foo  @ bb8</text>
+    </g>
+
+    <text x="805" y="440" font-family="Consolas, monospace" font-size="15" fill="#92400e">
+      <tspan x="805">FrameExtra.irq</tspan>
+      <tspan x="805" dy="23">= { event,</tspan>
+      <tspan x="805" dy="23">cpu, vector=32,</tspan>
+      <tspan x="805" dy="23">saved_if=1 }</tspan>
+    </text>
+    <g font-size="16" fill="#0e7490" text-anchor="middle">
+      <text x="865" y="336">此时 IF = 0</text>
+      <text x="1323" y="551">IF = 1</text>
+    </g>
+
+    <rect x="30" y="690" width="1340" height="100" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+    <text x="52" y="722" font-size="17" fill="#78350f">
+      <tspan x="52">为什么不用 Miri 线程：中断借用被打断者的栈，handler 运行时被打断者不能前进。</tspan>
+      <tspan x="52" dy="28">正因为在同一条执行流上，别名检查能看到"foo 还持有 &amp;mut X，handler 又写 X"（实例 1，见图 7）。</tspan>
+    </text>
+
+    <g font-size="16">
+      <text x="30" y="833">图例：</text>
+      <rect x="88" y="816" width="22" height="22" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+      <text x="120" y="833">紫=普通栈帧，</text>
+      <rect x="278" y="816" width="22" height="22" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="4"/>
+      <text x="310" y="833">蓝粗边=中断入口帧，</text>
+      <rect x="536" y="816" width="22" height="22" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+      <text x="568" y="833">橙=帧标记/说明，</text>
+      <rect x="769" y="816" width="22" height="22" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+      <text x="801" y="833">青=CPU 的 IF，</text>
+      <rect x="990" y="816" width="22" height="22" rx="10" fill="#e7f6ec" stroke="#16a34a" stroke-width="2"/>
+      <text x="1022" y="833">绿=恢复执行。</text>
+    </g>
+  </g>
+</svg>
