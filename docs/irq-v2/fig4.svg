@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .t { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 24px; font-weight: 700; fill: #111827; }
+      .h { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 15px; font-weight: 700; fill: #111827; }
+      .b { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 14px; fill: #1f2937; }
+      .s { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 13px; fill: #4b5563; }
+      .m { font-family: Consolas, monospace; font-size: 12.5px; fill: #374151; }
+      .n { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 15px; font-weight: 700; fill: #ffffff; }
+      .g { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 14px; font-weight: 700; fill: #15803d; }
+    </style>
+  </defs>
+  <rect width="1400" height="940" fill="#ffffff"/>
+  <text x="40" y="44" class="t">图 4 走一遍：星绽的一次时钟中断（含一次嵌套）在 KMiri 里的经过</text>
+  <text x="40" y="70" class="s">数据来自真实运行：星绽集成测试 irq-nested-l2，tick 间隔 10000 块。右列是 trace 原文的节选。</text>
+
+  <!-- header -->
+  <rect x="40" y="84" width="1320" height="34" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text class="h"><tspan x="96" y="106">发生了什么</tspan><tspan x="600" y="106">哪个部分在工作</tspan><tspan x="900" y="106">trace（真实输出节选）</tspan></text>
+
+  <!-- rows: y start, height 78 -->
+  <g>
+    <rect x="40" y="118" width="1320" height="70" fill="#ffffff" stroke="#e2e8f0"/>
+    <circle cx="66" cy="153" r="14" fill="#64748b"/><text x="66" y="158" text-anchor="middle" class="n">0</text>
+    <text class="b"><tspan x="96" y="146">初始化：星绽的对接层登记入口 miri_irq_entry，</tspan><tspan x="96" dy="22">装好时钟回调后启用时钟，向量 32</tspan></text>
+    <text class="b"><tspan x="600" y="146" class="g">内核 → KMiri</tspan><tspan x="600" dy="22">KMiri 记下入口函数和时钟向量</tspan></text>
+    <text class="m"><tspan x="900" y="158">register_irq_entry / set_timer_vector(32)</tspan></text>
+
+    <rect x="40" y="188" width="1320" height="70" fill="#f8fafc" stroke="#e2e8f0"/>
+    <circle cx="66" cy="223" r="14" fill="#16a34a"/><text x="66" y="228" text-anchor="middle" class="n">1</text>
+    <text class="b"><tspan x="96" y="216">内核正常运行。执行到第 9,080,000 个基本块</tspan><tspan x="96" dy="22">（10000 的倍数），时钟到点</tspan></text>
+    <text class="b"><tspan x="600" y="216" class="g">① 中断产生器 → ② 登记表</tspan><tspan x="600" dy="22">向量 32 记为“等待中”</tspan></text>
+    <text class="m"><tspan x="900" y="216">event=10 action=timer-queued vector=32</tspan><tspan x="900" dy="18">block=9080000 IF=true pending=1</tspan></text>
+
+    <rect x="40" y="258" width="1320" height="70" fill="#ffffff" stroke="#e2e8f0"/>
+    <circle cx="66" cy="293" r="14" fill="#16a34a"/><text x="66" y="298" text-anchor="middle" class="n">2</text>
+    <text class="b"><tspan x="96" y="286">同一个块边界：中断开着，也没有正在处理的中断</tspan><tspan x="96" dy="22">→ 送进去，内核入口被“插”在当前代码的栈顶</tspan></text>
+    <text class="b"><tspan x="600" y="286" class="g">③ 投递判断 → ④ 跳转</tspan><tspan x="600" dy="22">IF 清零；32 改为“处理中”</tspan></text>
+    <text class="m"><tspan x="900" y="286">event=10 action=delivered vector=32</tspan><tspan x="900" dy="18">IF=0 depth=1</tspan></text>
+
+    <rect x="40" y="328" width="1320" height="70" fill="#faf5ff" stroke="#e2e8f0"/>
+    <circle cx="66" cy="363" r="14" fill="#7c3aed"/><text x="66" y="368" text-anchor="middle" class="n">3</text>
+    <text class="b"><tspan x="96" y="356">星绽原样运行：合成 TrapFrame → trap_handler →</tspan><tspan x="96" dy="22">时钟回调（top half）→ ack() 发出 EOI</tspan></text>
+    <text class="b"><tspan x="600" y="356" class="g">内核代码 → ② 登记表</tspan><tspan x="600" dy="22">32 不再“处理中”，但入口还没返回</tspan></text>
+    <text class="m"><tspan x="900" y="368">event=10 action=eoi vector=32 IF=false</tspan></text>
+
+    <rect x="40" y="398" width="1320" height="70" fill="#faf5ff" stroke="#e2e8f0"/>
+    <circle cx="66" cy="433" r="14" fill="#7c3aed"/><text x="66" y="438" text-anchor="middle" class="n">4</text>
+    <text class="b"><tspan x="96" y="426">进入 bottom half，它重新打开中断，继续干活</tspan><tspan x="96" dy="22" class="s">（这个测试的 bottom half 会一直等到下一个 tick 进来）</tspan></text>
+    <text class="b"><tspan x="600" y="426" class="g">内核代码 → KMiri</tspan><tspan x="600" dy="22">IF 变回 1</tspan></text>
+    <text class="m"><tspan x="900" y="438">action=enable block_count=9080939</tspan></text>
+
+    <rect x="40" y="468" width="1320" height="80" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+    <circle cx="66" cy="508" r="14" fill="#d97706"/><text x="66" y="513" text-anchor="middle" class="n">5</text>
+    <text class="b"><tspan x="96" y="496" font-weight="700">第 9,090,000 块，又来一个 tick。中断开着，32 已</tspan><tspan x="96" dy="22" font-weight="700">EOI、不在处理中 → 允许嵌套，再插一层入口</tspan></text>
+    <text class="b"><tspan x="600" y="496" class="g">① → ② → ③ → ④（第二层）</tspan><tspan x="600" dy="22">嵌套深度 2；嵌套重入类 UB 的窗口</tspan></text>
+    <text class="m"><tspan x="900" y="496">event=11 action=timer-queued block=9090000</tspan><tspan x="900" dy="18">event=11 action=delivered vector=32</tspan><tspan x="900" dy="18">IF=0 depth=2</tspan></text>
+
+    <rect x="40" y="548" width="1320" height="70" fill="#ffffff" stroke="#e2e8f0"/>
+    <circle cx="66" cy="583" r="14" fill="#16a34a"/><text x="66" y="588" text-anchor="middle" class="n">6</text>
+    <text class="b"><tspan x="96" y="576">内层处理完：EOI，入口返回</tspan></text>
+    <text class="b"><tspan x="600" y="576" class="g">④ 返回</tspan><tspan x="600" dy="22">检查已 EOI ✓，IF 恢复</tspan></text>
+    <text class="m"><tspan x="900" y="576">event=11 action=eoi ...</tspan><tspan x="900" dy="18">event=11 action=returned IF=true depth=2</tspan></text>
+
+    <rect x="40" y="618" width="1320" height="70" fill="#f8fafc" stroke="#e2e8f0"/>
+    <circle cx="66" cy="653" r="14" fill="#16a34a"/><text x="66" y="658" text-anchor="middle" class="n">7</text>
+    <text class="b"><tspan x="96" y="646">外层 bottom half 结束，入口返回；被打断的代码</tspan><tspan x="96" dy="22">从原来的位置继续，好像什么都没发生过</tspan></text>
+    <text class="b"><tspan x="600" y="646" class="g">④ 返回</tspan><tspan x="600" dy="22">检查已 EOI ✓，IF 恢复为 1</tspan></text>
+    <text class="m"><tspan x="900" y="658">event=10 action=returned IF=true depth=1</tspan></text>
+  </g>
+
+  <rect x="40" y="708" width="650" height="146" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="1.5"/>
+  <text class="b"><tspan x="56" y="734" font-weight="700">全程在背后工作的两件事</tspan>
+    <tspan x="56" dy="26">• Miri 检查器：第 0–7 步里内核的每一次内存访问都被检查，</tspan><tspan x="70" dy="22">中断处理函数和被打断代码在同一个栈上，冲突能直接看到</tspan>
+    <tspan x="56" dy="26">• ⑤ 记录与诊断：每一行都写进 trace；本次运行核对了 23 个</tspan><tspan x="70" dy="22">事件的“送达 / 返回”括号全部匹配，没有任何诊断</tspan></text>
+
+  <rect x="710" y="708" width="650" height="146" rx="10" fill="#fde8e8" stroke="#dc2626" stroke-width="1.5"/>
+  <text class="b"><tspan x="726" y="734" font-weight="700" style="fill:#b91c1c">如果第 1 步时内核正关着中断（比如持有一个 guard）</tspan>
+    <tspan x="726" dy="26">• ③ 投递判断不送，32 一直“等待中”；</tspan>
+    <tspan x="726" dy="24">• 这期间再到点的 tick 合并进同一条，不会排成一长串；</tspan>
+    <tspan x="726" dy="24">• 内核一打开中断，下一个块边界就立刻送达。</tspan>
+    <tspan x="726" dy="24" class="s">这与 x86 硬件一致，也是 #3896 这类问题所依赖的语义</tspan></text>
+
+  <rect x="40" y="880" width="16" height="12" rx="3" fill="#16a34a"/><text x="62" y="891" class="s">绿 = KMiri 在工作</text>
+  <rect x="200" y="880" width="16" height="12" rx="3" fill="#7c3aed"/><text x="222" y="891" class="s">紫 = 星绽自己的代码在运行</text>
+  <rect x="400" y="880" width="16" height="12" rx="3" fill="#d97706"/><text x="422" y="891" class="s">橙 = 嵌套</text>
+</svg>
