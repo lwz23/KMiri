@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <rect x="0" y="0" width="1400" height="860" fill="#ffffff"/>
+  <rect x="796" y="212" width="586" height="349" rx="12" fill="#fde68a" fill-opacity="0.35" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8 5"/>
+  <defs>
+    <marker id="arrow-blue" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#1d4ed8"/>
+    </marker>
+    <marker id="arrow-cyan" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#0e7490"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <g font-family="Microsoft YaHei, SimHei, sans-serif" font-size="16" fill="#172033">
+    <text x="30" y="47" font-size="24" font-weight="bold">图 2  真实硬件上一个外部中断的一生（x86 + LAPIC，QEMU 同样按此建模）</text>
+
+    <g stroke="#e2e8f0" stroke-width="2">
+      <path d="M30 92 H1375 M30 205 H1375 M30 325 H1375 M30 480 H1375 M30 565 H1375"/>
+      <path d="M210 92 V565"/>
+    </g>
+
+    
+
+    <g font-weight="bold">
+      <text x="30" y="145" fill="#1d4ed8">① 事件源</text>
+      <text x="30" y="259" fill="#1d4ed8">② 中断控制器</text>
+      <text x="56" y="284" fill="#1d4ed8" font-family="Consolas, monospace">LAPIC</text>
+      <text x="30" y="389" fill="#0e7490">③ CPU</text>
+      <text x="30" y="526" fill="#7c3aed">④ 内核软件</text>
+    </g>
+
+    <rect x="235" y="112" width="365" height="65" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="417.5" y="150" text-anchor="middle">定时器到期 / 网卡收包 / 别的核发 IPI</text>
+    <path d="M350 177 V235" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="365" y="198" font-family="Consolas, monospace">raise(vec)</text>
+
+    <rect x="235" y="235" width="245" height="70" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="357.5" y="262" text-anchor="middle" font-family="Consolas, monospace">IRR[vec]=1  pending</text>
+    <text x="357.5" y="286" text-anchor="middle">（每个向量只有 1 位）</text>
+
+    <path d="M480 270 H590" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="535" y="251" text-anchor="middle" font-family="Consolas, monospace">accept</text>
+
+    <rect x="590" y="235" width="240" height="70" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="710" y="276" text-anchor="middle" font-family="Consolas, monospace">IRR→ISR  in-service</text>
+    <path d="M830 270 H868 M932 270 H970" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue)"/>
+    <text x="900" y="275" text-anchor="middle">……</text>
+
+    <rect x="970" y="235" width="130" height="70" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="1035" y="276" text-anchor="middle" font-family="Consolas, monospace">ISR[vec]=0</text>
+
+    <path d="M535 270 V350" fill="none" stroke="#0e7490" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+    <rect x="405" y="350" width="220" height="85" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+    <text x="515" y="383" text-anchor="middle">在指令边界检查：</text>
+    <text x="515" y="409" text-anchor="middle">IF=1？优先级允许？</text>
+
+    <path d="M625 392 H655" fill="none" stroke="#0e7490" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+    <rect x="655" y="350" width="295" height="85" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+    <text x="802.5" y="382" text-anchor="middle">压栈保存现场（含 RFLAGS）</text>
+    <text x="802.5" y="409" text-anchor="middle">; IF ← 0 ; 跳到 IDT[vec]</text>
+
+    <rect x="1215" y="340" width="160" height="105" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+    <text x="1295" y="365" text-anchor="middle">
+      <tspan x="1295">iret：恢复</tspan>
+      <tspan x="1295" dy="23" font-family="Consolas, monospace">RFLAGS</tspan>
+      <tspan x="1295" dy="23">（IF 回到原值），</tspan>
+      <tspan x="1295" dy="23">回到被打断的指令</tspan>
+    </text>
+
+    <path d="M680 435 V467 H355 V495" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <rect x="235" y="495" width="240" height="55" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="355" y="528" text-anchor="middle" font-family="Consolas, monospace">trap.S → trap_handler</text>
+    <path d="M475 522 H500" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <rect x="500" y="495" width="165" height="55" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="582.5" y="528" text-anchor="middle"><tspan font-family="Consolas, monospace">top half</tspan><tspan>（回调）</tspan></text>
+    <path d="M665 522 H690" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <rect x="690" y="495" width="100" height="55" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="740" y="528" text-anchor="middle" font-family="Consolas, monospace">ack()</text>
+    <path d="M790 522 H855" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <rect x="855" y="495" width="320" height="55" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="1015" y="528" text-anchor="middle"><tspan font-family="Consolas, monospace">bottom half</tspan><tspan>（可能重新开中断）</tspan></text>
+    <path d="M1175 522 H1230" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <rect x="1230" y="495" width="130" height="55" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="1295" y="528" text-anchor="middle">返回</text>
+    <path d="M1295 495 V445" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+    <path d="M740 495 V455 H1035 V305" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+    <text x="780" y="478">EOI（写 LAPIC 寄存器）</text>
+
+    <path d="M1155 557 V582" fill="none" stroke="#f59e0b" stroke-width="2"/>
+    <rect x="235" y="582" width="1140" height="44" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+    <text x="805" y="609" text-anchor="middle">EOI 之后、iret 之前：同一向量可再次 pending，bottom half 开中断后可嵌套 ⇒ 这正是 bug 藏身的窗口</text>
+
+    <rect x="235" y="644" width="1140" height="170" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+    <g fill="none" stroke="#cbd5e1" stroke-width="2">
+      <path d="M235 678 H1375 M235 712 H1375 M235 746 H1375 M235 780 H1375"/>
+      <path d="M495 644 V814 M800 644 V814"/>
+    </g>
+    <g font-weight="bold">
+      <text x="255" y="667">状态</text>
+      <text x="515" y="667">归谁管</text>
+      <text x="820" y="667">何时变化</text>
+    </g>
+    <text x="255" y="701" font-family="Consolas, monospace">IF</text>
+    <text x="515" y="701">CPU（每核一份）</text>
+    <text x="820" y="701"><tspan font-family="Consolas, monospace">cli/sti</tspan><tspan>；accept 时清 0；iret 恢复</tspan></text>
+
+    <text x="255" y="735" font-family="Consolas, monospace">pending (IRR)</text>
+    <text x="515" y="735">控制器，每向量 1 位</text>
+    <text x="820" y="735">raise 置位；accept 清除</text>
+
+    <text x="255" y="769" font-family="Consolas, monospace">in-service (ISR)</text>
+    <text x="515" y="769">控制器</text>
+    <text x="820" y="769">accept 置位；EOI 清除</text>
+
+    <text x="255" y="803">中断栈帧</text>
+    <text x="515" y="803">CPU + 内核栈</text>
+    <text x="820" y="803">accept 压栈；iret 弹出</text>
+
+    <text x="235" y="844">图例：</text>
+    <rect x="295" y="826" width="25" height="24" rx="10" fill="#e8f0fe" stroke="#1d4ed8" stroke-width="2"/>
+    <text x="330" y="844">蓝=控制器/事件源，</text>
+    <rect x="510" y="826" width="25" height="24" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+    <text x="545" y="844">青=CPU，</text>
+    <rect x="655" y="826" width="25" height="24" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="690" y="844">紫=内核软件，</text>
+    <rect x="845" y="826" width="25" height="24" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+    <text x="880" y="844">橙=关键窗口。</text>
+  </g>
+</svg>
