@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .t { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 24px; font-weight: 700; fill: #111827; }
+      .h { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 17px; font-weight: 700; fill: #111827; }
+      .k { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 16px; font-weight: 700; fill: #111827; }
+      .q { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 14px; font-weight: 700; fill: #15803d; }
+      .b { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 14px; fill: #1f2937; }
+      .s { font-family: "Microsoft YaHei", SimHei, sans-serif; font-size: 13px; fill: #4b5563; }
+      .m { font-family: Consolas, monospace; font-size: 13px; fill: #1f2937; }
+    </style>
+    <marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 Z" fill="#15803d"/></marker>
+    <marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 Z" fill="#7c3aed"/></marker>
+    <marker id="ao" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 Z" fill="#d97706"/></marker>
+  </defs>
+  <rect width="1400" height="940" fill="#ffffff"/>
+  <text x="40" y="44" class="t">图 3 KMiri 中断支持的组成：内核代码原样运行，KMiri 扮演“中断硬件”</text>
+
+  <!-- kernel -->
+  <rect x="40" y="64" width="1040" height="92" rx="10" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+  <text x="58" y="90" class="h">星绽内核（原样运行，一行不改）</text>
+  <text class="b"><tspan x="58" y="118">开/关中断：<tspan class="m">disable_local()</tspan> / <tspan class="m">enable_local()</tspan>（各种 guard 内部都在用）</tspan>
+    <tspan x="58" dy="24">中断处理：<tspan class="m">trap_handler</tspan> → top half（如时钟回调）→ <tspan class="m">ack()</tspan> → bottom half（可能重新开中断）</tspan></text>
+
+  <!-- adapter -->
+  <rect x="40" y="170" width="1040" height="132" rx="10" fill="#faf5ff" stroke="#7c3aed" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="58" y="196" class="h">对接层 arch/miri（内核里的一层薄适配：把“硬件指令”换成“调用 KMiri”）</text>
+  <text class="b">
+    <tspan x="58" y="224">关/开中断指令 cli / sti</tspan><tspan x="330" class="m">→ kern_miri_irq_disable / enable</tspan>
+    <tspan x="58" dy="24">写 LAPIC 的 EOI 寄存器</tspan><tspan x="330" class="m">→ kern_miri_irq_eoi(vector)</tspan>
+    <tspan x="58" dy="24">设置 LAPIC 定时器</tspan><tspan x="330" class="m">→ kern_miri_set_timer_vector(32)</tspan>
+  </text>
+  <text class="b">
+    <tspan x="640" y="224">设置中断向量表 IDT</tspan><tspan x="810" class="m">→ kern_miri_register_irq_entry</tspan>
+    <tspan x="640" dy="24">汇编入口 trap.S</tspan><tspan x="810" class="m">→ miri_irq_entry(vector)：</tspan>
+    <tspan x="810" dy="22" class="s">合成 TrapFrame，再调原来的 trap_handler</tspan>
+  </text>
+
+  <!-- arrows kernel<->kmiri -->
+  <line x1="300" y1="302" x2="300" y2="352" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#ap)"/>
+  <text x="312" y="332" class="s">内核调用：开关中断 / EOI / 启用时钟 / 登记入口</text>
+  <path d="M905,404 L905,330 L905,306" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#ao)"/>
+  <text x="893" y="332" text-anchor="end" class="s" style="fill:#b45309">KMiri 调用内核入口 miri_irq_entry(vector)</text>
+
+  <!-- KMiri box -->
+  <rect x="40" y="356" width="1040" height="420" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="58" y="384" class="h">KMiri 新增：一套“虚拟中断硬件”（在解释器里，不认识任何内核名字）</text>
+
+  <rect x="58" y="404" width="240" height="236" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text class="k"><tspan x="74" y="432">① 中断产生器</tspan></text>
+  <text class="q"><tspan x="74" y="456">“什么时候、来哪个中断”</tspan></text>
+  <text class="b"><tspan x="74" y="484">时钟到点、或测试代码主动</tspan><tspan x="74" dy="21">触发时，把一个向量号（如</tspan><tspan x="74" dy="21">32）交给登记表。</tspan><tspan x="74" dy="21">“挑哪些时刻产生”由时机</tspan><tspan x="74" dy="21">策略决定（第 7 节）</tspan></text>
+  <text class="s"><tspan x="74" y="626">对应硬件：定时器、外设</tspan></text>
+
+  <rect x="314" y="404" width="240" height="236" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text class="k"><tspan x="330" y="432">② 中断登记表</tspan></text>
+  <text class="q"><tspan x="330" y="456">“哪些在等、哪些在处理”</tspan></text>
+  <text class="b"><tspan x="330" y="484">每个向量两种状态：</tspan><tspan x="330" dy="21">• 等待中：已产生、未送达；</tspan><tspan x="330" dy="21">  同一向量只记一次</tspan><tspan x="330" dy="21">• 处理中：已送达、内核</tspan><tspan x="330" dy="21">  还没 EOI；EOI 后清除</tspan></text>
+  <text class="s"><tspan x="330" y="626">对应硬件：LAPIC 的 IRR / ISR</tspan></text>
+
+  <rect x="570" y="404" width="240" height="236" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text class="k"><tspan x="586" y="432">③ 投递判断</tspan></text>
+  <text class="q"><tspan x="586" y="456">“此刻能不能送、送哪个”</tspan></text>
+  <text class="b"><tspan x="586" y="484">每执行完一个基本块问一次：</tspan><tspan x="586" dy="21">• 中断开着吗（IF=1）？</tspan><tspan x="586" dy="21">• 挑优先级最高的等待中断，</tspan><tspan x="586" dy="21">  它比所有处理中的都高吗？</tspan><tspan x="586" dy="21">• 嵌套层数没到上限吗？</tspan></text>
+  <text class="s"><tspan x="586" y="626">对应硬件：CPU 在指令边界的检查</tspan></text>
+
+  <rect x="826" y="404" width="240" height="236" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text class="k"><tspan x="842" y="432">④ 跳转与返回</tspan></text>
+  <text class="q"><tspan x="842" y="456">“怎么插进去、怎么回来”</tspan></text>
+  <text class="b"><tspan x="842" y="484">送：在当前执行流的栈顶插入</tspan><tspan x="842" dy="21">一次对内核入口的调用，记下</tspan><tspan x="842" dy="21">原来的 IF，再把 IF 清零。</tspan><tspan x="842" dy="21">回：这次调用返回时，检查</tspan><tspan x="842" dy="21">已 EOI，把 IF 恢复原值</tspan></text>
+  <text class="s"><tspan x="842" y="626">对应硬件：CPU 压栈跳转、iret</tspan></text>
+
+  <line x1="298" y1="520" x2="310" y2="520" stroke="#15803d" stroke-width="2.5" marker-end="url(#ag)"/>
+  <line x1="554" y1="520" x2="566" y2="520" stroke="#15803d" stroke-width="2.5" marker-end="url(#ag)"/>
+  <line x1="810" y1="520" x2="822" y2="520" stroke="#15803d" stroke-width="2.5" marker-end="url(#ag)"/>
+
+  <rect x="58" y="656" width="1008" height="104" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+  <text class="k"><tspan x="74" y="684">⑤ 记录与诊断</tspan><tspan class="q" dx="16">“发生了什么、中断协议有没有被违反”</tspan></text>
+  <text class="b"><tspan x="74" y="712">记录：每个中断的 产生 / 合并 / 送达 / EOI / 返回，连同块号写进 trace，可用来复现和核对。</tspan>
+    <tspan x="74" dy="24">诊断：返回时还没 EOI、EOI 了一个没在处理的向量、嵌套触到上限、handler 卡死 → 停下并说明原因。<tspan style="fill:#b45309">这些只是诊断，不算发现的 bug</tspan></tspan></text>
+
+  <!-- Miri -->
+  <rect x="40" y="790" width="1040" height="86" rx="10" fill="#e0f7fa" stroke="#0e7490" stroke-width="2"/>
+  <text x="58" y="818" class="h">Miri 原有检查器（复用，不改）：是不是 UB，由它说了算</text>
+  <text class="b"><tspan x="58" y="846">每一次内存访问都检查别名规则（Stacked / Tree Borrows）、释放后使用、越界等。因为 ④ 让中断处理函数跑在</tspan><tspan x="58" dy="22">被打断代码的同一个栈上，它能直接看到“两边访问了同一块数据”的冲突，不需要另加规则。</tspan></text>
+
+  <!-- state column -->
+  <rect x="1100" y="64" width="260" height="500" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="1116" y="92" class="h">KMiri 保存的状态</text>
+  <text x="1116" y="114" class="s">（每个 CPU 一份，第一版只有一个）</text>
+  <text class="b">
+    <tspan x="1116" y="148" font-weight="700">中断开关 IF</tspan><tspan x="1116" dy="20" class="s">由内核开关中断改变；③ 读</tspan>
+    <tspan x="1116" dy="32" font-weight="700">等待中的中断</tspan><tspan x="1116" dy="20" class="s">① 写入，③ 取出</tspan>
+    <tspan x="1116" dy="32" font-weight="700">处理中的中断</tspan><tspan x="1116" dy="20" class="s">④ 送达时加入，EOI 时清除</tspan>
+    <tspan x="1116" dy="32" font-weight="700">嵌套中的入口帧</tspan><tspan x="1116" dy="20" class="s">每层记：哪个中断、原来的 IF</tspan>
+    <tspan x="1116" dy="32" font-weight="700">时钟向量</tspan><tspan x="1116" dy="20" class="s">内核启用时钟后才有；① 读</tspan>
+    <tspan x="1116" dy="32" font-weight="700">内核入口函数</tspan><tspan x="1116" dy="20" class="s">内核登记；④ 调用</tspan>
+    <tspan x="1116" dy="32" font-weight="700">虚拟时间</tspan><tspan x="1116" dy="20" class="s">已执行的基本块数；① 读</tspan>
+  </text>
+  <rect x="1100" y="580" width="260" height="296" rx="10" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="1116" y="608" class="h">为什么这样分</text>
+  <text class="b"><tspan x="1116" y="636">• 一个部分对应一个硬件角色，</tspan><tspan x="1130" dy="21">规则可以逐条对照 Intel</tspan><tspan x="1130" dy="21">手册和 QEMU 核对</tspan><tspan x="1116" dy="28">• “产生”和“送达”分开：关</tspan><tspan x="1130" dy="21">中断时产生的中断要等</tspan><tspan x="1116" dy="28">• “EOI”和“返回”分开：中间</tspan><tspan x="1130" dy="21">这段正是嵌套发生的窗口</tspan><tspan x="1116" dy="28">• 时机策略只在 ① 里，提升</tspan><tspan x="1130" dy="21">找 bug 能力只改这一处</tspan></text>
+
+  <rect x="40" y="898" width="16" height="12" rx="3" fill="#f3e8ff" stroke="#7c3aed"/><text x="62" y="909" class="s">紫 = 内核（不改）</text>
+  <rect x="190" y="898" width="16" height="12" rx="3" fill="#faf5ff" stroke="#7c3aed" stroke-dasharray="4 3"/><text x="212" y="909" class="s">紫虚线 = 内核里的对接层</text>
+  <rect x="380" y="898" width="16" height="12" rx="3" fill="#f0fdf4" stroke="#16a34a"/><text x="402" y="909" class="s">绿 = KMiri 新增（基本机制均已实现；① 的时机策略见第 7 节）</text>
+  <rect x="800" y="898" width="16" height="12" rx="3" fill="#e0f7fa" stroke="#0e7490"/><text x="822" y="909" class="s">青 = 复用 Miri</text>
+</svg>
