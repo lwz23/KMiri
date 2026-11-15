@@ -1,0 +1,12 @@
+page_table = true
+total_mem_size = 0x8000000
+[irq]
+enabled = true
+tick_interval_basic_blocks = 10000
+inject_at_basic_blocks = []
+random_injection_rate = 0.0
+adversarial_vectors = [64]
+adversarial_injection_rate = 0.00005
+random_seed = 2
+handler_budget_basic_blocks = 100000
+trace = true

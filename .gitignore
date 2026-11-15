@@ -9,3 +9,4 @@ target/
 !/vivo-blueos/minimal.defconfig
 !/vivo-blueos/.gitignore
 !/vivo-blueos/snapshot.xml
+/asterinas-m1648
