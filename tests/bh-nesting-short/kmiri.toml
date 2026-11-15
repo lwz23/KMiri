@@ -1,0 +1,17 @@
+# Same as ../asterinas.toml, plus a timer tick every 10000 basic blocks and an
+# adversarial device-IRQ source on vector 64 that also fires, with probability
+# 0.1, whenever IRQs are re-enabled (critical-point injection; fixed seed).
+page_table = true
+total_mem_size = 0x800_0000
+
+[irq]
+enabled = true
+tick_interval_basic_blocks = 10000
+inject_at_basic_blocks = []
+random_injection_rate = 0.0
+adversarial_vectors = [64]
+adversarial_injection_rate = 0.00005
+critical_injection_rate = 0.1
+random_seed = 1
+handler_budget_basic_blocks = 100000
+trace = false
