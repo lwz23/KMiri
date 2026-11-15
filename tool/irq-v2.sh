@@ -28,6 +28,7 @@ export MIRI=/KMiri/kmiri/target/debug/miri
 export MIRI_SYSROOT=/work/sysroot-kernel
 export VDSO_LIBRARY_DIR=/KMiri/env/linux_vdso
 export OSDK_LOCAL_DEV=1 CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=${JOBS:-8}
+export CARGO_PROFILE_DEV_OPT_LEVEL=2   # lwz built miri this way; an unoptimized miri is ~10x slower
 export PATH=/work/tools/bin:/KMiri/kmiri/target/debug:/KMiri/kmiri/cargo-miri/target/debug:/opt/sysroot/usr/local/bin:/usr/local/bin:/usr/bin:/bin
 unset RUSTUP_TOOLCHAIN RUSTC RUSTFLAGS CARGO_ENCODED_RUSTFLAGS
 '
