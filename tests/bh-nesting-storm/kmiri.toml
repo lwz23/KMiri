@@ -1,0 +1,13 @@
+# Same as ../asterinas.toml, plus a timer tick every 10000 basic blocks:
+# this test needs timer IRQs to arrive while a bottom half is running.
+page_table = true
+total_mem_size = 0x800_0000
+
+[irq]
+enabled = true
+tick_interval_basic_blocks = 10000
+inject_at_basic_blocks = []
+random_injection_rate = 0.0
+random_seed = 0
+handler_budget_basic_blocks = 100000
+trace = false
