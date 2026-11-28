@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 700" width="1160" height="700" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+  <rect width="1160" height="700" fill="#fff"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+  <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f5fa8"/></marker></defs>
+  <text x="580" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#222">图 4　线程切换与中断：保留 riscv 的上下文和中断位语义</text>
+
+  <!-- native column -->
+  <text x="250" y="72" text-anchor="middle" font-size="17" font-weight="bold" fill="#333">原生 arch/riscv</text>
+  <g font-size="14">
+    <rect x="40" y="88" width="420" height="58" rx="8" fill="#eeeeee" stroke="#777"/>
+    <text x="250" y="112" text-anchor="middle">switch_context_with_hook：ecall 陷入</text>
+    <text x="250" y="134" text-anchor="middle" font-size="12" fill="#555">硬件：MPIE ← MIE，MIE ← 0</text>
+    <rect x="40" y="160" width="420" height="58" rx="8" fill="#eeeeee" stroke="#777"/>
+    <text x="250" y="184" text-anchor="middle">trap_entry 把寄存器存成 Context</text>
+    <text x="250" y="206" text-anchor="middle" font-size="12" fill="#555">放在当前线程栈上，saved_sp 指向它</text>
+    <rect x="40" y="232" width="420" height="58" rx="8" fill="#eeeeee" stroke="#777"/>
+    <text x="250" y="256" text-anchor="middle">换到下一个线程的栈，在那里跑 hook</text>
+    <text x="250" y="278" text-anchor="middle" font-size="12" fill="#555">save_context_finish_hook：记下旧 sp、改线程状态</text>
+    <rect x="40" y="304" width="420" height="58" rx="8" fill="#eeeeee" stroke="#777"/>
+    <text x="250" y="328" text-anchor="middle">从下一个 Context 恢复寄存器，mret</text>
+    <text x="250" y="350" text-anchor="middle" font-size="12" fill="#555">MIE ← MPIE，跳到 mepc</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="250" y1="147" x2="250" y2="157"/><line x1="250" y1="219" x2="250" y2="229"/><line x1="250" y1="291" x2="250" y2="301"/></g>
+
+  <!-- kmiri column -->
+  <text x="830" y="72" text-anchor="middle" font-size="17" font-weight="bold" fill="#173a6e">arch/kmiri（每个内核线程 = 一个 Miri 线程）</text>
+  <g font-size="14">
+    <rect x="560" y="88" width="560" height="58" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="840" y="112" text-anchor="middle">trap_enter：同样 MPIE ← MIE，MIE ← 0</text>
+    <text x="840" y="134" text-anchor="middle" font-size="12" fill="#173a6e">MPIE 是每个 hart 一份，和硬件一样不跟线程走</text>
+    <rect x="560" y="160" width="560" height="58" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="840" y="184" text-anchor="middle">在当前栈上建一个真实的 riscv Context</text>
+    <text x="840" y="206" text-anchor="middle" font-size="12" fill="#173a6e">mepc = 恢复点地址，tp = 恢复它用的 Miri 线程（0 表示从没跑过）</text>
+    <rect x="560" y="232" width="560" height="58" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="840" y="256" text-anchor="middle">读下一个线程的 Context：tp=0 → 新建 Miri 线程</text>
+    <text x="840" y="278" text-anchor="middle" font-size="12" fill="#173a6e">它按 mepc 和 a0–a7 进入线程入口（kern_miri_jump）；否则 miri_switch_to(tp)</text>
+    <rect x="560" y="304" width="560" height="58" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="840" y="328" text-anchor="middle">被切入的一侧跑同一个 hook，然后 trap_return</text>
+    <text x="840" y="350" text-anchor="middle" font-size="12" fill="#173a6e">MIE ← MPIE；hook、调度器、线程状态都是内核原代码</text>
+  </g>
+  <g stroke="#2f5fa8" stroke-width="2" marker-end="url(#b)"><line x1="840" y1="147" x2="840" y2="157"/><line x1="840" y1="219" x2="840" y2="229"/><line x1="840" y1="291" x2="840" y2="301"/></g>
+  <g stroke="#bbb" stroke-dasharray="5 4"><line x1="462" y1="117" x2="556" y2="117"/><line x1="462" y1="189" x2="556" y2="189"/><line x1="462" y1="261" x2="556" y2="261"/><line x1="462" y1="333" x2="556" y2="333"/></g>
+
+  <!-- interrupt row -->
+  <text x="40" y="404" font-size="17" font-weight="bold" fill="#333">时钟中断（抢占发生在中断返回处，和原生一样）</text>
+  <g font-size="14">
+    <rect x="40" y="420" width="250" height="70" rx="8" fill="#f2e6f7" stroke="#7b3f99"/>
+    <text x="165" y="448" text-anchor="middle">KMiri 的 CLINT 模型</text>
+    <text x="165" y="470" text-anchor="middle" font-size="12" fill="#4a1f5e">虚拟时钟 mtime ≥ mtimecmp</text>
+    <rect x="320" y="420" width="250" height="70" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="445" y="448" text-anchor="middle">irq_entry(7)</text>
+    <text x="445" y="470" text-anchor="middle" font-size="12" fill="#173a6e">在当前线程上被调用（MIE=1 时）</text>
+    <rect x="600" y="420" width="250" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="725" y="448" text-anchor="middle">handle_clock_interrupt</text>
+    <text x="725" y="470" text-anchor="middle" font-size="12" fill="#1d4d1d">内核原代码：唤醒超时线程</text>
+    <rect x="880" y="420" width="240" height="70" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="1000" y="448" text-anchor="middle">might_switch_context</text>
+    <text x="1000" y="470" text-anchor="middle" font-size="12" fill="#173a6e">照抄 riscv 版逻辑，需要就切换</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="292" y1="455" x2="316" y2="455"/><line x1="572" y1="455" x2="596" y2="455"/><line x1="852" y1="455" x2="876" y2="455"/></g>
+
+  <!-- not faithful -->
+  <rect x="40" y="520" width="1080" height="160" rx="8" fill="#fff7f0" stroke="#c76a00"/>
+  <text x="60" y="548" font-size="16" font-weight="bold" fill="#7a3e00">和原生不同、或还不支持的地方</text>
+  <text x="60" y="576" font-size="14" fill="#333">· 寄存器内容不真实保存：线程的局部变量由 Miri 线程自己保留，Context 里只有 mepc、tp 和新线程的 a0–a7 有意义</text>
+  <text x="60" y="602" font-size="14" fill="#333">· 恢复点被改成别的地址时直接 unimplemented!（原生的信号处理会这样做，但当前上游没有调用者）；switch_stack 未实现</text>
+  <text x="60" y="628" font-size="14" fill="#333">· 测试里直接写的 ecall 内联汇编（stress_trap）解释不了 → 这一条记为「不支持」</text>
+  <text x="60" y="654" font-size="14" fill="#333">· might_switch_context、中断分派是从 arch/riscv 照抄的：上游改 riscv 版时这里要跟着改</text>
+</svg>

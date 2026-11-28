@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 720" width="1160" height="720" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+<rect width="1160" height="720" fill="#fff"/>
+<defs><pattern id="u" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#fde2e2"/><line x1="0" y1="0" x2="0" y2="6" stroke="#d04040" stroke-width="2"/></pattern><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b03030"/></marker></defs>
+<text x="580" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#222">图 5　4 条 UB 的来源：Dirent::from_buf_ref 与 Dirent::name()</text>
+<text x="40" y="70" font-size="15" fill="#333">BlueOS 上 ino_t = u16、off_t = i32，所以 Dirent 对齐 4 字节，名字从第 14 字节开始；头部有 3 个填充字节（偏移 2、3、11）。</text>
+<text x="40" y="108" font-size="17" font-weight="bold" fill="#333">① 未对齐的引用（4 条测试都先停在这里）</text>
+<rect x="40" y="120" width="1080" height="70" rx="8" fill="#fafafa" stroke="#999"/>
+<text x="60" y="148" font-size="14" font-family="Consolas, monospace" fill="#333">let mut buf = [0u8; 256];   // 对齐只有 1</text>
+<text x="60" y="174" font-size="14" font-family="Consolas, monospace" fill="#333">let d = unsafe { Dirent::from_buf_ref(&amp;buf) };   // 造出 &amp;Dirent，要求 4 对齐</text>
+<text x="700" y="148" font-size="14" fill="#b03030">KMiri：required 4 byte alignment but found 2</text>
+<text x="700" y="174" font-size="13" fill="#555">缓冲区地址恰好是 4k+2；是否对齐取决于栈布局</text>
+<text x="40" y="232" font-size="17" font-weight="bold" fill="#333">② 改成对齐缓冲后：name() 固定取 256 字节，越出缓冲区（test_dirent）</text>
+<rect x="60" y="250" width="800" height="34" fill="#eef3fb" stroke="#2f5fa8"/>
+<text x="460" y="272" text-anchor="middle" font-size="13">buf：256 字节（一个条目 "test.txt" + 后面全是 0）</text>
+<rect x="103.8" y="292" width="800.0" height="22" fill="none" stroke="#b03030" stroke-width="2" stroke-dasharray="6 3"/>
+<text x="109.8" y="308" font-size="13" fill="#b03030">name() 造的 &amp;[u8]：偏移 14 起 256 字节</text>
+<rect x="860" y="292" width="43.8" height="22" fill="#fde2e2" stroke="#b03030"/>
+<text x="864" y="340" font-size="13" fill="#b03030">多出 14 字节在缓冲区外 → dangling reference</text>
+<text x="40" y="378" font-size="17" font-weight="bold" fill="#333">③ getdents 两条测试：name() 的 256 字节盖到下一个条目的未初始化填充字节</text>
+<rect x="50" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="52" y="414" font-size="10" fill="#777">0</text>
+<rect x="72" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="94" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="116" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="138" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="140" y="414" font-size="10" fill="#777">4</text>
+<rect x="160" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="182" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="204" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="226" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="228" y="414" font-size="10" fill="#777">8</text>
+<rect x="248" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="270" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="292" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="314" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="316" y="414" font-size="10" fill="#777">12</text>
+<rect x="336" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="358" y="420" width="22" height="30" fill="#d7efd3" stroke="#888" stroke-width="0.6"/>
+<text x="369.0" y="440" text-anchor="middle" font-size="14" font-family="Consolas, monospace">.</text>
+<rect x="380" y="420" width="22" height="30" fill="#555" stroke="#888" stroke-width="0.6"/>
+<text x="391.0" y="440" text-anchor="middle" font-size="10" fill="#fff">\0</text>
+<rect x="402" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="404" y="414" font-size="10" fill="#777">16</text>
+<rect x="424" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="446" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="468" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="490" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="492" y="414" font-size="10" fill="#777">20</text>
+<rect x="512" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="534" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="556" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="578" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="580" y="414" font-size="10" fill="#777">24</text>
+<rect x="600" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="622" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="644" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="666" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="668" y="414" font-size="10" fill="#777">28</text>
+<rect x="688" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="710" y="420" width="22" height="30" fill="#d7efd3" stroke="#888" stroke-width="0.6"/>
+<text x="721.0" y="440" text-anchor="middle" font-size="14" font-family="Consolas, monospace">.</text>
+<rect x="732" y="420" width="22" height="30" fill="#d7efd3" stroke="#888" stroke-width="0.6"/>
+<text x="743.0" y="440" text-anchor="middle" font-size="14" font-family="Consolas, monospace">.</text>
+<rect x="754" y="420" width="22" height="30" fill="#555" stroke="#888" stroke-width="0.6"/>
+<text x="765.0" y="440" text-anchor="middle" font-size="10" fill="#fff">\0</text>
+<text x="756" y="414" font-size="10" fill="#777">32</text>
+<rect x="776" y="420" width="22" height="30" fill="#ffffff" stroke="#888" stroke-width="0.6"/>
+<rect x="798" y="420" width="22" height="30" fill="#ffffff" stroke="#888" stroke-width="0.6"/>
+<rect x="820" y="420" width="22" height="30" fill="#ffffff" stroke="#888" stroke-width="0.6"/>
+<rect x="842" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="844" y="414" font-size="10" fill="#777">36</text>
+<rect x="864" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="886" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="908" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<rect x="930" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="932" y="414" font-size="10" fill="#777">40</text>
+<rect x="952" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="974" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="996" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="1018" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<text x="1020" y="414" font-size="10" fill="#777">44</text>
+<rect x="1040" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="1062" y="420" width="22" height="30" fill="#e6ecf5" stroke="#888" stroke-width="0.6"/>
+<rect x="1084" y="420" width="22" height="30" fill="url(#u)" stroke="#888" stroke-width="0.6"/>
+<text x="1112" y="440" font-size="14" fill="#777">…</text>
+<line x1="50" y1="460" x2="400" y2="460" stroke="#2f5fa8" stroke-width="2"/>
+<text x="54" y="478" font-size="13" fill="#2f5fa8">"."  reclen 16</text>
+<line x1="402" y1="460" x2="840" y2="460" stroke="#2f5fa8" stroke-width="2"/>
+<text x="406" y="478" font-size="13" fill="#2f5fa8">".."  reclen 20</text>
+<line x1="842" y1="460" x2="1104" y2="460" stroke="#2f5fa8" stroke-width="2"/>
+<text x="846" y="478" font-size="13" fill="#2f5fa8">"dev"  reclen 20</text>
+<line x1="710" y1="498" x2="1136" y2="498" stroke="#b03030" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#a)"/>
+<text x="710" y="518" font-size="13" fill="#b03030">".." 的 name()：从偏移 30 起取 256 字节，盖住后面所有条目</text>
+<rect x="754" y="418" width="176" height="34" fill="none" stroke="#b03030" stroke-width="3"/>
+<text x="446" y="394" font-size="13" fill="#b03030">memchr 按 8 字节一次读 32..40（含 \0），其中 38、39 未初始化 → UB</text>
+<rect x="50" y="550" width="18" height="16" fill="#e6ecf5" stroke="#888"/><text x="76" y="563" font-size="13" fill="#333">头部字段（write_node 写入）</text>
+<rect x="410" y="550" width="18" height="16" fill="url(#u)" stroke="#888"/><text x="436" y="563" font-size="13" fill="#333">填充字节：从栈上临时 Dirent 原样拷来，未初始化</text>
+<rect x="770" y="550" width="18" height="16" fill="#d7efd3" stroke="#888"/><text x="796" y="563" font-size="13" fill="#333">名字</text>
+<rect x="50" y="576" width="18" height="16" fill="#555" stroke="#888"/><text x="76" y="589" font-size="13" fill="#333">结尾 \0</text>
+<rect x="410" y="576" width="18" height="16" fill="#ffffff" stroke="#888"/><text x="436" y="589" font-size="13" fill="#333">补齐到 4 字节（缓冲区原来的 0）</text>
+<text x="40" y="636" font-size="14" fill="#333">"." 的名字在 14、15，memchr 对齐前逐字节扫，15 就找到 \0，所以没出错；".." 的名字跨到 32，开始按字读，读到 "dev" 头部的填充字节。</text>
+<text x="40" y="662" font-size="14" fill="#333">修法：name() 只取 d_namlen + 1 字节；测试用对齐缓冲。两处都改后，原来报 UB 的 4 条测试全部通过。</text>
+</svg>

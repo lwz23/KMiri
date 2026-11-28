@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 600" width="1160" height="600" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+  <rect width="1160" height="600" fill="#fff"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+  <text x="580" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#222">图 2　一次 KMiri 运行 = 构建 + 启动内核 + 跑一条测试</text>
+
+  <!-- build lane -->
+  <text x="40" y="76" font-size="17" font-weight="bold" fill="#333">① 构建（BlueOS 自己的 GN/ninja，换一条工具链）</text>
+  <rect x="40" y="92" width="250" height="78" rx="8" fill="#f5f5f5" stroke="#777"/>
+  <text x="165" y="120" text-anchor="middle" font-size="15">gn gen board="kmiri"</text>
+  <text x="165" y="144" text-anchor="middle" font-size="13" fill="#555">syscall_mode="dsc"</text>
+  <text x="165" y="162" text-anchor="middle" font-size="13" fill="#555">defconfig 从 qemu_riscv64 复制</text>
+  <rect x="330" y="92" width="370" height="78" rx="8" fill="#f5f5f5" stroke="#777"/>
+  <text x="515" y="120" text-anchor="middle" font-size="15">依赖库：KMiri 当编译器用</text>
+  <text x="515" y="144" text-anchor="middle" font-size="13" fill="#555">MIRI_BE_RUSTC=target，产出带 MIR 的 rlib</text>
+  <text x="515" y="162" text-anchor="middle" font-size="13" fill="#555">过程宏仍由宿主 rustc 编译</text>
+  <rect x="740" y="92" width="380" height="78" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+  <text x="930" y="120" text-anchor="middle" font-size="15">最后一步 kernel_unittest：不链接</text>
+  <text x="930" y="144" text-anchor="middle" font-size="13" fill="#173a6e">kmiri_rustc.py 改为让 KMiri 解释执行</text>
+  <text x="930" y="162" text-anchor="middle" font-size="13" fill="#173a6e">附 -Zkmiri-toml=kmiri.toml 和 KMIRI_FLAGS</text>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="292" y1="131" x2="326" y2="131"/><line x1="702" y1="131" x2="736" y2="131"/></g>
+
+  <!-- run lane -->
+  <text x="40" y="214" font-size="17" font-weight="bold" fill="#333">② 解释执行（全部是内核自己的代码，除了标蓝的入口）</text>
+  <g font-size="14">
+    <rect x="40" y="230" width="150" height="70" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="115" y="258" text-anchor="middle">miri_start</text>
+    <text x="115" y="280" text-anchor="middle" font-size="12" fill="#173a6e">代替 _start 汇编</text>
+    <rect x="215" y="230" width="160" height="70" rx="8" fill="#dde9fb" stroke="#2f5fa8"/>
+    <text x="295" y="258" text-anchor="middle">CPU 0 拉起 hart 1</text>
+    <text x="295" y="280" text-anchor="middle" font-size="12" fill="#173a6e">原生的启动栈布局</text>
+    <rect x="400" y="230" width="150" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="475" y="258" text-anchor="middle">boot::init</text>
+    <text x="475" y="280" text-anchor="middle" font-size="12" fill="#1d4d1d">运行时、堆、中断入口</text>
+    <rect x="575" y="230" width="160" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="655" y="258" text-anchor="middle">调度器启动</text>
+    <text x="655" y="280" text-anchor="middle" font-size="12" fill="#1d4d1d">idle 线程、时钟中断</text>
+    <rect x="760" y="230" width="170" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="845" y="258" text-anchor="middle">init_test 线程</text>
+    <text x="845" y="280" text-anchor="middle" font-size="12" fill="#1d4d1d">.bk_app_array 里登记</text>
+    <rect x="955" y="230" width="165" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="1037" y="258" text-anchor="middle">读命令行，选测试</text>
+    <text x="1037" y="280" text-anchor="middle" font-size="12" fill="#1d4d1d">SYS_GET_CMDLINE</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)">
+    <line x1="192" y1="265" x2="211" y2="265"/><line x1="377" y1="265" x2="396" y2="265"/><line x1="552" y1="265" x2="571" y2="265"/><line x1="737" y1="265" x2="756" y2="265"/><line x1="932" y1="265" x2="951" y2="265"/>
+    <line x1="1037" y1="302" x2="1037" y2="330"/>
+  </g>
+  <rect x="760" y="334" width="360" height="70" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+  <text x="940" y="362" text-anchor="middle" font-size="15">只跑这一条 #[test]</text>
+  <text x="940" y="386" text-anchor="middle" font-size="13" fill="#1d4d1d">OK → 打印 Done；UB → KMiri 报错并终止</text>
+  <rect x="40" y="334" width="680" height="70" rx="8" fill="#f2e6f7" stroke="#7b3f99"/>
+  <text x="380" y="360" text-anchor="middle" font-size="14" fill="#4a1f5e">全程 KMiri 检查：越界 · 释放后使用 · 读未初始化 · 未对齐 · 数据竞争</text>
+  <text x="380" y="384" text-anchor="middle" font-size="13" fill="#4a1f5e">默认关闭别名检查（-Zmiri-disable-stacked-borrows），见第 5 节</text>
+
+  <!-- sweep lane -->
+  <text x="40" y="448" font-size="17" font-weight="bold" fill="#333">③ 逐测试全量（harness 的 run.sh sweep）</text>
+  <g font-size="14">
+    <rect x="40" y="464" width="230" height="78" rx="8" fill="#f5f5f5" stroke="#777"/>
+    <text x="155" y="492" text-anchor="middle">run.sh list</text>
+    <text x="155" y="516" text-anchor="middle" font-size="12" fill="#555">一次运行带 --list，得到测试名</text>
+    <rect x="310" y="464" width="330" height="78" rx="8" fill="#f5f5f5" stroke="#777"/>
+    <text x="475" y="492" text-anchor="middle">每条测试一个 KMiri 进程（并行）</text>
+    <text x="475" y="516" text-anchor="middle" font-size="12" fill="#555">BLUEOS_MIRI_TEST_FILTER=名字 --exact</text>
+    <text x="475" y="534" text-anchor="middle" font-size="12" fill="#555">每条约 20 s，大部分是启动</text>
+    <rect x="680" y="464" width="440" height="78" rx="8" fill="#f5f5f5" stroke="#777"/>
+    <text x="900" y="492" text-anchor="middle">results.tsv：每条一个结果</text>
+    <text x="900" y="516" text-anchor="middle" font-size="12" fill="#555">ub &gt; unsupported &gt; timeout &gt; failed &gt; ok</text>
+    <text x="900" y="534" text-anchor="middle" font-size="12" fill="#555">一条报 UB 不影响别的测试</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="272" y1="503" x2="306" y2="503"/><line x1="642" y1="503" x2="676" y2="503"/></g>
+  <text x="40" y="580" font-size="13" fill="#666">为什么一次只跑一条：Miri 在第一个 UB 处终止整个程序。原来所有测试在一次运行里顺序执行，前面一条报 UB 或不支持，后面的就都跑不到了。</text>
+</svg>

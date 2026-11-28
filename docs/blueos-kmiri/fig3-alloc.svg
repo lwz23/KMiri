@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 640" width="1160" height="640" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif">
+  <rect width="1160" height="640" fill="#fff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+    <pattern id="h" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f7f7f7"/><line x1="0" y1="0" x2="0" y2="8" stroke="#bbb" stroke-width="3"/></pattern>
+  </defs>
+  <text x="580" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#222">图 3　内核自己分配，KMiri 只记账：「池 + 对象」</text>
+
+  <!-- memory bar -->
+  <text x="40" y="64" font-size="16" font-weight="bold" fill="#333">DRAM 中镜像之后的部分，在 kmiri.toml 里声明为一个池 [[pool]] Dram（0x80bc3000 – 0x88000000）</text>
+  <rect x="40" y="92" width="1080" height="56" fill="url(#h)" stroke="#7b3f99"/>
+  <rect x="40" y="92" width="150" height="56" fill="#ece3f1" stroke="#7b3f99"/>
+  <text x="115" y="116" text-anchor="middle" font-size="13">buddy 页描述符</text>
+  <text x="115" y="136" text-anchor="middle" font-size="12" fill="#555">放在 _end</text>
+  <rect x="300" y="92" width="400" height="56" fill="#ece3f1" stroke="#7b3f99"/>
+  <text x="500" y="86" text-anchor="middle" font-size="12" fill="#555">一张 slab 页</text>
+  <g stroke="#7b3f99"><line x1="350" y1="92" x2="350" y2="148"/><line x1="400" y1="92" x2="400" y2="148"/><line x1="450" y1="92" x2="450" y2="148"/><line x1="500" y1="92" x2="500" y2="148"/><line x1="550" y1="92" x2="550" y2="148"/><line x1="600" y1="92" x2="600" y2="148"/><line x1="650" y1="92" x2="650" y2="148"/></g>
+  <rect x="400" y="100" width="31" height="40" fill="#ffd9a8" stroke="#c76a00" stroke-width="2"/>
+  <text x="325" y="125" text-anchor="middle" font-size="11" fill="#555">空闲</text>
+  <text x="375" y="125" text-anchor="middle" font-size="11" fill="#555">空闲</text>
+  <text x="840" y="125" text-anchor="middle" font-size="13" fill="#555">其余的页（buddy 管理，分配器自由读写）</text>
+  <line x1="415" y1="150" x2="415" y2="182" stroke="#c76a00" stroke-width="2" marker-end="url(#a)"/>
+  <text x="430" y="176" font-size="13" fill="#c76a00">KMiri 在这个地址上建一个恰好 20 字节的对象（所在的 slab 槽比 20 字节大）</text>
+
+  <!-- alloc sequence -->
+  <text x="40" y="222" font-size="16" font-weight="bold" fill="#333">分配：Box::new / malloc(20)</text>
+  <g font-size="14">
+    <rect x="40" y="236" width="200" height="60" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="140" y="262" text-anchor="middle">HEAP.alloc(layout)</text>
+    <text x="140" y="283" text-anchor="middle" font-size="12" fill="#1d4d1d">分配器原样运行，选出地址</text>
+    <rect x="280" y="236" width="230" height="60" rx="8" fill="#fff4cc" stroke="#b08800"/>
+    <text x="395" y="262" text-anchor="middle">notify::born(ptr, layout)</text>
+    <text x="395" y="283" text-anchor="middle" font-size="12" fill="#5c4700">原生：直接返回 ptr</text>
+    <rect x="550" y="236" width="270" height="60" rx="8" fill="#f2e6f7" stroke="#7b3f99"/>
+    <text x="685" y="262" text-anchor="middle">kern_miri_object_born</text>
+    <text x="685" y="283" text-anchor="middle" font-size="12" fill="#4a1f5e">建对象，返回带该对象出处的指针</text>
+    <rect x="860" y="236" width="260" height="60" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="990" y="262" text-anchor="middle">调用方使用这块内存</text>
+    <text x="990" y="283" text-anchor="middle" font-size="12" fill="#1d4d1d">按 20 字节查越界、未初始化</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="242" y1="266" x2="276" y2="266"/><line x1="512" y1="266" x2="546" y2="266"/><line x1="822" y1="266" x2="856" y2="266"/></g>
+
+  <!-- free sequence -->
+  <text x="40" y="336" font-size="16" font-weight="bold" fill="#333">释放：drop / free(ptr)</text>
+  <g font-size="14">
+    <rect x="40" y="350" width="230" height="60" rx="8" fill="#fff4cc" stroke="#b08800"/>
+    <text x="155" y="376" text-anchor="middle">notify::died(ptr)</text>
+    <text x="155" y="397" text-anchor="middle" font-size="12" fill="#5c4700">原生：直接返回 ptr</text>
+    <rect x="310" y="350" width="290" height="60" rx="8" fill="#f2e6f7" stroke="#7b3f99"/>
+    <text x="455" y="376" text-anchor="middle">kern_miri_object_died</text>
+    <text x="455" y="397" text-anchor="middle" font-size="12" fill="#4a1f5e">结束对象，返回只指向池的指针</text>
+    <rect x="640" y="350" width="220" height="60" rx="8" fill="#e3f4e1" stroke="#3a8a3a"/>
+    <text x="750" y="376" text-anchor="middle">HEAP.dealloc</text>
+    <text x="750" y="397" text-anchor="middle" font-size="12" fill="#1d4d1d">分配器往槽里写空闲链表</text>
+    <rect x="900" y="350" width="220" height="60" rx="8" fill="#fde2e2" stroke="#b03030"/>
+    <text x="1010" y="376" text-anchor="middle">之后再用旧指针</text>
+    <text x="1010" y="397" text-anchor="middle" font-size="12" fill="#7a1d1d">对象已死 → 报释放后使用</text>
+  </g>
+  <g stroke="#555" stroke-width="2" marker-end="url(#a)"><line x1="272" y1="380" x2="306" y2="380"/><line x1="602" y1="380" x2="636" y2="380"/><line x1="862" y1="380" x2="896" y2="380"/></g>
+  <text x="40" y="436" font-size="13" fill="#555">realloc 另有两个通知：开始前挂起旧对象；成功后新对象继承内容，失败则恢复旧对象（BlueOS 有测试要求 realloc 失败后旧块仍然可用）。</text>
+
+  <!-- comparison -->
+  <rect x="40" y="458" width="530" height="160" rx="8" fill="#fafafa" stroke="#999"/>
+  <text x="305" y="484" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">星绽（有页表）</text>
+  <text x="60" y="512" font-size="14" fill="#333">· 每页一个状态：Unused → Untyped → Typed(slot 大小)</text>
+  <text x="60" y="538" font-size="14" fill="#333">· 页分配器、slab 槽、页表页处发通知</text>
+  <text x="60" y="564" font-size="14" fill="#333">· OSTD 公共代码里约 93 处 cfg(miri)</text>
+  <text x="60" y="590" font-size="14" fill="#333">· 依赖 KMiri 的页表模型</text>
+  <rect x="590" y="458" width="530" height="160" rx="8" fill="#fafafa" stroke="#999"/>
+  <text x="855" y="484" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">BlueOS（无 MMU、无页表）</text>
+  <text x="610" y="512" font-size="14" fill="#333">· 无页表时 KMiri 的页状态表是空的，星绽那套用不了</text>
+  <text x="610" y="538" font-size="14" fill="#333">· 新原语「池 + 对象」：池内字节归分配器，对象归使用方</text>
+  <text x="610" y="564" font-size="14" fill="#333">· 只在 allocator/notify.rs 一个文件里 cfg(miri)</text>
+  <text x="610" y="590" font-size="14" fill="#333">· 分配器库零改动，BlueOS 5 种分配器配置通用</text>
+</svg>
